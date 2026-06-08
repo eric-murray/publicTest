@@ -149,7 +149,7 @@ paths:
                 content:
                   application/cloudevents+json:
                     schema:
-                      $ref: "#/components/schemas/ApiNotificationEvent"
+                      $ref: "#/components/schemas/SubscriptionLifecycleEvent"
                     examples:
                       data-50-percent:
                         $ref: "#/components/examples/DATA_50_PERCENT"
