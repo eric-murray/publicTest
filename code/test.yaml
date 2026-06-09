@@ -1,55 +1,60 @@
 openapi: 3.0.3
 info:
-  title: Device Data Volume Subscriptions
+  title: Media Streaming Rate
+  version: wip
+  x-camara-commonalities: wip
   description: |
-    This API enables customers to subscribe to events related to data volume usage thresholds on a device. It supports both request and subscription modes to track remaining data volume.
+    This is a media streaming rate service API that allows application developers to retrieve
+    the maximum media streaming bit rate supported for a given device.
 
     # Introduction
+      The Media Streaming Rate API allows an application developer to query the network
+      for the maximum supported media streaming bit rate for a specific end user device.
+      This API measures device connection quality by determining the maximum downstream
+      data rate available for media streaming, which is influenced by factors such as
+      network conditions, device capabilities, and current network congestion.
 
-    ## Device Data Volume Subscriptions
+      This information helps developers ensure their media streaming applications can provide
+      optimal quality while using the current network connection, enabling adaptive bitrate
+      streaming and preventing buffering issues.
 
-    API consumers can receive notifications regarding data volume usage thresholds, such as when the remaining data volume reaches 50%, 75%, or 90% of the user's allocated data plan. This is useful for managing data usage and avoiding overage fees.
+    # API functionality
 
-    # Relevant terms and definitions
+    Prerequisite: authorisation and authentication
 
-    * **Device**: A device refers to any physical entity capable of network communication, identified via an IP address, phone number, or Network Access Identifier.
+    Usage:
+      1. Request: POST `retrieve-maximum-downstream-media-rate`, passing device identification
+         information such as IP address, phone number, or network access identifier.
+      2. Response: The network will return the maximum downstream media streaming bit rate supported
+         for the device along with the unit of measurement.
 
-    # API Functionality
+    # Usage in Media Streaming Applications
 
-    The API exposes the following capabilities:
+    This API can be integrated into media streaming applications to determine optimal
+    video resolution for streaming. A typical workflow:
 
-    ## Device Data Volume Subscriptions
+    1. Application client requests manifest file (DASH/HLS) from CDN server
+    2. Application client calls Media Streaming Rate API to get maximum supported bit rate
+    3. Based on the response, application selects appropriate media resolution from the manifest
+    4. Application begins media streaming from CDN using the optimal resolution
 
-    These endpoints allow management of subscriptions to data volume usage events. The CAMARA subscription model follows the CloudEvents specification.
+    This approach ensures the best possible viewing experience while preventing buffering or quality issues.
 
-    When subscribing, it is mandatory to provide the event `types` related to data volume thresholds you wish to track.
+    The diagram below illustrates how the Media Streaming Rate API is used in a typical media streaming application:
 
-    The following event `types` are managed for this API:
-      - `org.camaraproject.device-data-volume-subscriptions.v0.data-50-percent`: Event triggered when 50% of the data plan is consumed.
-      - `org.camaraproject.device-data-volume-subscriptions.v0.data-75-percent`: Event triggered when 75% of the data plan is consumed.
-      - `org.camaraproject.device-data-volume-subscriptions.v0.data-90-percent`: Event triggered when 90% of the data plan is consumed.
-      - `org.camaraproject.device-data-volume-subscriptions.v0.data-exceeded`: Event triggered when the data plan is exceeded.
+    ![Media Streaming Rate API Sequence Diagram](../../documentation/SupportingDocuments/media-rate-sequence-flow.png)
 
-    Note: Additionally, the following events could be send, which do not require a dedicated subscription:
-      - `org.camaraproject.device-data-volume-subscriptions.v0.subscription-started` is sent when the subscription starts.
-      - `org.camaraproject.device-data-volume-subscriptions.v0.subscription-updated` is sent when the subscription is updated.
-      - `org.camaraproject.device-data-volume-subscriptions.v0.subscription-ended` is sent when the subscription ends.
+    # Token usage: two-legged vs three-legged
 
-    It is used in following cases:
-      - the subscription expire time (optionally set by the requester) has been reached
-      - the maximum number of subscription events (optionally set by the requester) has been reached
-      - the subscription was deleted by the requester
-      - the Access Token `sinkCredential` (optionally set by the requester) expiration time has been reached
-      - the API server has to stop sending notification prematurely
+    This API supports two types of access tokens:
 
-    ### Notification callback
+    - **Two-legged token**: Used for server-to-server calls. The device to be queried MUST be identified by providing the `device` object in the request body.
+    - **Three-legged token**: Used for user-authenticated calls. The device is identified from the access token itself, and the `device` object MUST NOT be provided in the request.
 
-    This endpoint describes the event notification received on subscription listener side when the event occurred.
-    As for subscription, detailed description of the event notification is provided in the CAMARA API design guideline document.
+    If a two-legged token is used and the device object is missing, the API will return a `422 MISSING_IDENTIFIER` error.
+    If a three-legged token is used and the device object is provided, the API will return a `422 UNNECESSARY_IDENTIFIER` error.
 
-    _**WARNING**: This callback endpoint must be exposed on the consumer side as `POST /{$request.body#/sink}`.
-      Developers may provide a callback URL on which notifications regarding device data volume events can be received from the service provider.
-      If an event occurs the application will send events to the provided webhook - 'sink'._
+    This approach ensures clarity and security in device identification, and aligns with CAMARA API standards.
 
     <!-- CAMARA:MANDATORY:authorization-and-authentication:BEGIN -->
     # Authorization and authentication
@@ -64,16 +69,11 @@ info:
     # Identifying the device from the access token
 
     This API requires the API consumer to identify a device as the subject of the API as follows:
-    - When the API is invoked using a two-legged access token, the subject will be identified from the optional `device` object, which therefore MUST be provided.
+    - When the API is invoked using a two-legged access token, the subject will be identified from the device object, which therefore MUST be provided.
+
     - When a three-legged access token is used however, this optional identifier MUST NOT be provided, as the subject will be uniquely identified from the access token.
 
     This approach simplifies API usage for API consumers using a three-legged access token to invoke the API by relying on the information that is associated with the access token and was identified during the authentication process.
-
-    ## Error handling:
-
-    - If the subject cannot be identified from the access token and the optional `device` object is not included in the request, then the server will return an error with the `422 MISSING_IDENTIFIER` error code.
-
-    - If the subject can be identified from the access token and the optional `device` object is also included in the request, then the server will return an error with the `422 UNNECESSARY_IDENTIFIER` error code. This will be the case even if the same device is identified by these two methods, as the server is unable to make this comparison.
 
     <!-- CAMARA:MANDATORY:additional-error-responses:BEGIN -->
     # Additional CAMARA error responses
@@ -93,189 +93,51 @@ info:
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
-  version: wip
-  x-camara-commonalities: wip
 
 externalDocs:
-  description: Project documentation at CAMARA
-  url: https://github.com/camaraproject/DeviceDataVolume
+  description: Product documentation
+  url: https://github.com/camaraproject/DeviceQualityIndicator
 
 servers:
-  - url: "{apiRoot}/device-data-volume-subscriptions/vwip"
+  - url: "{apiRoot}/media-streaming-rate/vwip"
     variables:
       apiRoot:
-        default: http://localhost:9091
-        description: API root, defined by the service provider, e.g. `api.example.com` or `api.example.com/somepath`
+        default: http://localhost:8087
+        description: |
+          API root, defined by service provider, e.g.
+          `api.example.com` or `api.example.com/somepath`
 
 tags:
-  - name: Device Data Volume Subscriptions
-    description: Manage subscriptions to device data volume usage events.
+  - name: Media Streaming Rate
+    description: |
+      Retrieve the maximum media streaming bit rate supported for a given device.
 
 paths:
-  /subscriptions:
+  /retrieve-maximum-downstream-media-rate:
     post:
-      tags:
-        - Device Data Volume Subscriptions
-      summary: "Create a device data volume event subscription"
-      description: Create a subscription for data volume usage events
-      operationId: createDeviceDataVolumeSubscription
-      parameters:
-        - $ref: "../common/CAMARA_common.yaml#/components/parameters/x-correlator"
       security:
         - openId:
-            - device-data-volume-subscriptions:org.camaraproject.device-data-volume-subscriptions.v0.data-50-percent:create
-            - device-data-volume-subscriptions:org.camaraproject.device-data-volume-subscriptions.v0.data-75-percent:create
-            - device-data-volume-subscriptions:org.camaraproject.device-data-volume-subscriptions.v0.data-90-percent:create
-            - device-data-volume-subscriptions:org.camaraproject.device-data-volume-subscriptions.v0.data-exceeded:create
+            - media-streaming-rate:retrieve-maximum-downstream-media-rate
+      tags:
+        - Media Streaming Rate
+      summary: Get maximum downstream media streaming rate
+      description: |
+        Retrieve the maximum downstream media streaming rate for a device. This helps application
+        developers determine the optimal media quality settings for their applications.
+
+        When using a two-legged token, the device object MUST be provided.
+        When using a three-legged token, the device object MUST NOT be provided as
+        the device information will be extracted from the token.
+      operationId: retrieveMaximumDownstreamMediaRate
+      parameters:
+        - $ref: "../common/CAMARA_common.yaml#/components/parameters/x-correlator"
       requestBody:
+        description: Device information needed to determine media rate capabilities.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SubscriptionRequest"
+              $ref: "#/components/schemas/MediaStreamingRateRequest"
         required: true
-      callbacks:
-        notifications:
-          "{$request.body#/sink}":
-            post:
-              summary: "notifications callback"
-              description: |
-                Important: this endpoint is to be implemented by the API consumer.
-                The Data Volume server will call this endpoint whenever a data volume usage event occurs.
-              operationId: postNotification
-              parameters:
-                - $ref: "../common/CAMARA_common.yaml#/components/parameters/x-correlator"
-              requestBody:
-                required: true
-                content:
-                  application/cloudevents+json:
-                    schema:
-                      $ref: "#/components/schemas/SubscriptionLifecycleEvent"
-                    examples:
-                      data-50-percent:
-                        $ref: "#/components/examples/DATA_50_PERCENT"
-                      data-75-percent:
-                        $ref: "#/components/examples/DATA_75_PERCENT"
-                      data-90-percent:
-                        $ref: "#/components/examples/DATA_90_PERCENT"
-                      data-exceeded:
-                        $ref: "#/components/examples/DATA_EXCEEDED"
-                      subscription-started:
-                        $ref: "#/components/examples/SUBSCRIPTION_STARTED"
-                      subscription-updated:
-                        $ref: "#/components/examples/SUBSCRIPTION_UPDATED"
-                      subscription-ended:
-                        $ref: "#/components/examples/SUBSCRIPTION_ENDED"
-              responses:
-                "204":
-                  description: Successful notification
-                  headers:
-                    x-correlator:
-                      $ref: "../common/CAMARA_common.yaml#/components/headers/x-correlator"
-                "400":
-                  $ref: "../common/CAMARA_common.yaml#/components/responses/Generic400"
-                "401":
-                  $ref: "../common/CAMARA_common.yaml#/components/responses/Generic401"
-                "403":
-                  $ref: "../common/CAMARA_common.yaml#/components/responses/Generic403"
-                "410":
-                  $ref: "../common/CAMARA_common.yaml#/components/responses/Generic410"
-                "429":
-                  $ref: "../common/CAMARA_common.yaml#/components/responses/Generic429"
-              security:
-                - {}
-                - notificationsBearerAuth: []
-
-      responses:
-        "201":
-          description: Created
-          headers:
-            x-correlator:
-              $ref: "../common/CAMARA_common.yaml#/components/headers/x-correlator"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Subscription"
-              examples:
-                Successful Subscription Creation:
-                  $ref: "#/components/examples/SUBSCRIPTION_CREATION"
-                Successful Subscription Creation With Device Disambiguation:
-                  $ref: "#/components/examples/SUBSCRIPTION_CREATION_WITH_DEVICE_DISAMBIGUATION"
-        "202":
-          description: Request accepted to be processed. It applies for async creation process.
-          headers:
-            x-correlator:
-              $ref: "../common/CAMARA_common.yaml#/components/headers/x-correlator"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SubscriptionAsync"
-        "400":
-          $ref: "../common/CAMARA_event_common.yaml#/components/responses/CreateSubscriptionBadRequest400"
-        "401":
-          $ref: "../common/CAMARA_common.yaml#/components/responses/Generic401"
-        "403":
-          $ref: "../common/CAMARA_event_common.yaml#/components/responses/SubscriptionPermissionDenied403"
-        "409":
-          $ref: "../common/CAMARA_common.yaml#/components/responses/Generic409"
-        "422":
-          $ref: "../common/CAMARA_event_common.yaml#/components/responses/CreateSubscriptionUnprocessableEntity422"
-        "429":
-          $ref: "../common/CAMARA_common.yaml#/components/responses/Generic429"
-
-    get:
-      tags:
-        - Device Data Volume Subscriptions
-      summary: "Retrieve a list of device data volume subscriptions"
-      description: Retrieve a list of data volume usage event subscription(s)
-      operationId: retrieveDeviceDataVolumeSubscriptionList
-      parameters:
-        - $ref: "../common/CAMARA_common.yaml#/components/parameters/x-correlator"
-        - $ref: "../common/CAMARA_common.yaml#/components/parameters/page"
-        - $ref: "../common/CAMARA_common.yaml#/components/parameters/perPage"
-      security:
-        - openId:
-            - device-data-volume-subscriptions:read
-      responses:
-        "200":
-          description: List of event subscription details
-          headers:
-            x-correlator:
-              $ref: "../common/CAMARA_common.yaml#/components/headers/x-correlator"
-            X-Total-Count:
-              $ref: "../common/CAMARA_common.yaml#/components/headers/x-total-count"
-            X-Total-Pages:
-              $ref: "../common/CAMARA_common.yaml#/components/headers/x-total-pages"
-            Link:
-              $ref: "../common/CAMARA_common.yaml#/components/headers/link"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SubscriptionList"
-              examples:
-                Subscription List:
-                  $ref: "#/components/examples/SUBSCRIPTION_LIST"
-                Empty Subscription List:
-                  $ref: "#/components/examples/EMPTY_SUBSCRIPTION_LIST"
-        "400":
-          $ref: "../common/CAMARA_common.yaml#/components/responses/Generic400"
-        "401":
-          $ref: "../common/CAMARA_common.yaml#/components/responses/Generic401"
-        "403":
-          $ref: "../common/CAMARA_common.yaml#/components/responses/Generic403"
-
-  /subscriptions/{subscriptionId}:
-    get:
-      tags:
-        - Device Data Volume Subscriptions
-      summary: "Retrieve a device data volume event subscription"
-      description: Retrieve a specific subscription by ID
-      operationId: retrieveDeviceDataVolumeSubscription
-      security:
-        - openId:
-            - device-data-volume-subscriptions:read
-      parameters:
-        - $ref: "#/components/parameters/SubscriptionId"
-        - $ref: "../common/CAMARA_common.yaml#/components/parameters/x-correlator"
       responses:
         "200":
           description: OK
@@ -285,610 +147,57 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Subscription"
-              examples:
-                Active Subscription:
-                  $ref: "#/components/examples/ACTIVE_SUBSCRIPTION"
-                Active Subscription With Device Disambiguation:
-                  $ref: "#/components/examples/ACTIVE_SUBSCRIPTION_WITH_DEVICE_DISAMBIGUATION"
+                $ref: "#/components/schemas/MediaStreamingRateResponse"
         "400":
-          $ref: "../common/CAMARA_event_common.yaml#/components/responses/SubscriptionIdRequired400"
+          $ref: "../common/CAMARA_common.yaml#/components/responses/Generic400"
         "401":
           $ref: "../common/CAMARA_common.yaml#/components/responses/Generic401"
         "403":
           $ref: "../common/CAMARA_common.yaml#/components/responses/Generic403"
         "404":
           $ref: "../common/CAMARA_common.yaml#/components/responses/Generic404"
-
-    delete:
-      tags:
-        - Device Data Volume Subscriptions
-      summary: "Delete a device data volume event subscription"
-      operationId: deleteDeviceDataVolumeSubscription
-      description: |
-        This operation deletes a specific data volume usage subscription by its subscription ID.
-        Once deleted, no more notifications will be sent for the corresponding subscription.
-      security:
-        - openId:
-            - device-data-volume-subscriptions:delete
-      parameters:
-        - $ref: "#/components/parameters/SubscriptionId"
-        - $ref: "../common/CAMARA_common.yaml#/components/parameters/x-correlator"
-      responses:
-        "204":
-          description: No Content - Subscription successfully deleted
-          headers:
-            x-correlator:
-              $ref: "../common/CAMARA_common.yaml#/components/headers/x-correlator"
-        "202":
-          description: Request accepted to be processed. It applies for async deletion process.
-          headers:
-            x-correlator:
-              $ref: "../common/CAMARA_common.yaml#/components/headers/x-correlator"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SubscriptionAsync"
-        "400":
-          $ref: "../common/CAMARA_event_common.yaml#/components/responses/SubscriptionIdRequired400"
-        "401":
-          $ref: "../common/CAMARA_common.yaml#/components/responses/Generic401"
-        "403":
-          $ref: "../common/CAMARA_common.yaml#/components/responses/Generic403"
-        "404":
-          $ref: "../common/CAMARA_common.yaml#/components/responses/Generic404"
+        "422":
+          $ref: "../common/CAMARA_common.yaml#/components/responses/Generic422"
+        "429":
+          $ref: "../common/CAMARA_common.yaml#/components/responses/Generic429"
+        "503":
+          $ref: "../common/CAMARA_common.yaml#/components/responses/Generic500"
 
 components:
   securitySchemes:
     openId:
       $ref: "../common/CAMARA_common.yaml#/components/securitySchemes/openId"
-    notificationsBearerAuth:
-      $ref: "../common/CAMARA_event_common.yaml#/components/securitySchemes/notificationsBearerAuth"
 
-  parameters:
-    SubscriptionId:
-      name: subscriptionId
-      in: path
-      description: Subscription identifier that was obtained from the create event subscription operation
-      required: true
-      schema:
-        $ref: "../common/CAMARA_event_common.yaml#/components/schemas/SubscriptionId"
-
-  schemas:
-    SubscriptionDetail:
-      description: The details of the requested device data volume subscription.
+    MediaStreamingRateRequest:
       type: object
+      description: Defines the request body parameters
       properties:
         device:
           $ref: "../common/CAMARA_common.yaml#/components/schemas/Device"
 
-    Config:
-      description: Config schema allowing for device to be specified as part of subscription detail
-      allOf:
-        - $ref: "../common/CAMARA_event_common.yaml#/components/schemas/Config"
-        - type: object
-          properties:
-            subscriptionDetail:
-              $ref: "#/components/schemas/SubscriptionDetail"
-
-    ApiEventType:
-      type: string
-      description: |
-        Event types that can be triggered for device data volume monitoring.
-      enum:
-        - org.camaraproject.device-data-volume-subscriptions.v0.data-50-percent
-        - org.camaraproject.device-data-volume-subscriptions.v0.data-75-percent
-        - org.camaraproject.device-data-volume-subscriptions.v0.data-90-percent
-        - org.camaraproject.device-data-volume-subscriptions.v0.data-exceeded
-
-    ApiNotificationEvent:
-      description: |
-        API-specific notification event group.
-        Extends the CloudEvent envelope and constrains `type` to the set of
-        event types defined by this API project.
-        Adding a new event type only requires updating ApiEventType and the
-        discriminator mapping below — the CloudEvent base never changes.
-      allOf:
-        - $ref: "../common/CAMARA_event_common.yaml#/components/schemas/CloudEvent"
-        - type: object
-          properties:
-            type:
-              $ref: "#/components/schemas/ApiEventType"
-      discriminator:
-        propertyName: "type"
-        mapping:
-          org.camaraproject.device-data-volume-subscriptions.v0.data-50-percent: "#/components/schemas/EventDataUsage50Percent"
-          org.camaraproject.device-data-volume-subscriptions.v0.data-75-percent: "#/components/schemas/EventDataUsage75Percent"
-          org.camaraproject.device-data-volume-subscriptions.v0.data-90-percent: "#/components/schemas/EventDataUsage90Percent"
-          org.camaraproject.device-data-volume-subscriptions.v0.data-exceeded: "#/components/schemas/EventDataUsageExceeded"
-
-    NotificationEvent:
-      description: |
-        Union of all valid notification event groups at the callback endpoint.
-        This schema owns no discriminator — routing within each group is
-        handled by ApiNotificationEvent and SubscriptionLifecycleEvent
-        respectively. Its only responsibility is to enumerate which groups
-        are valid payloads for this API's notification callback.
-      oneOf:
-        - $ref: "#/components/schemas/ApiNotificationEvent"
-        - $ref: "#/components/schemas/SubscriptionLifecycleEvent"
-
-    Subscription:
-      description: Represents a device data volume subscription.
+    MediaStreamingRateResponse:
       type: object
-      required:
-        - sink
-        - protocol
-        - config
-        - types
-        - id
-        - startsAt
-      properties:
-        protocol:
-          $ref: "../common/CAMARA_event_common.yaml#/components/schemas/Protocol"
-        sink:
-          $ref: "#/components/schemas/Sink"
-        types:
-          description: |
-            Camara Event types eligible to be delivered by this subscription for device data volume.
-            Note: As of now we enforce to have only event type per subscription.
-          type: array
-          minItems: 1
-          maxItems: 1
-          items:
-            $ref: "#/components/schemas/ApiEventType"
-        config:
-          $ref: "#/components/schemas/Config"
-        id:
-          $ref: "../common/CAMARA_event_common.yaml#/components/schemas/SubscriptionId"
-        startsAt:
-          $ref: "../common/CAMARA_common.yaml#/components/schemas/DateTime"
-        expiresAt:
-          $ref: "../common/CAMARA_common.yaml#/components/schemas/DateTime"
-        status:
-          type: string
-          description: |-
-            Current status of the subscription - Management of Subscription State engine is not mandatory for now. Note not all statuses may be considered to be implemented. Details:
-              - `ACTIVATION_REQUESTED`: Subscription creation (POST) is triggered but subscription creation process is not finished yet.
-              - `ACTIVE`: Subscription creation process is completed. Subscription is fully operative.
-              - `INACTIVE`: Subscription is temporarily inactive, but its workflow logic is not deleted.
-              - `EXPIRED`: Subscription is ended (no longer active). This status applies when subscription is ended due to `SUBSCRIPTION_EXPIRED` or `ACCESS_TOKEN_EXPIRED` event.
-              - `DELETED`: Subscription is ended as deleted (no longer active). This status applies when subscription information is kept (i.e. subscription workflow is no longer active but its meta-information is kept).
-          enum:
-            - ACTIVATION_REQUESTED
-            - ACTIVE
-            - EXPIRED
-            - INACTIVE
-            - DELETED
-      discriminator:
-        propertyName: protocol
-        mapping:
-          HTTP: "#/components/schemas/HTTPSubscriptionResponse"
-          # Future protocol support (not yet used in CAMARA):
-          # MQTT3: "#/components/schemas/MQTTSubscriptionResponse"
-          # MQTT5: "#/components/schemas/MQTTSubscriptionResponse"
-          # AMQP: "#/components/schemas/AMQPSubscriptionResponse"
-          # NATS: "#/components/schemas/NATSSubscriptionResponse"
-          # KAFKA: "#/components/schemas/ApacheKafkaSubscriptionResponse"
-
-    SubscriptionRequest:
-      description: The request for creating a event-type event subscription
-      type: object
-      required:
-        - sink
-        - protocol
-        - config
-        - types
-      properties:
-        protocol:
-          $ref: "../common/CAMARA_event_common.yaml#/components/schemas/Protocol"
-        sink:
-          $ref: "#/components/schemas/Sink"
-        sinkCredential:
-          $ref: "../common/CAMARA_event_common.yaml#/components/schemas/SinkCredential"
-        types:
-          description: |
-            Camara Event types eligible to be delivered by this subscription.
-            Note: As of now we enforce to have only event type per subscription.
-          type: array
-          minItems: 1
-          maxItems: 1
-          items:
-            $ref: "#/components/schemas/ApiEventType"
-        config:
-          $ref: "#/components/schemas/Config"
-      discriminator:
-        propertyName: protocol
-        mapping:
-          HTTP: "#/components/schemas/HTTPSubscriptionRequest"
-          # Future protocol support (not yet used in CAMARA):
-          # MQTT3: "#/components/schemas/MQTTSubscriptionRequest"
-          # MQTT5: "#/components/schemas/MQTTSubscriptionRequest"
-          # AMQP: "#/components/schemas/AMQPSubscriptionRequest"
-          # NATS: "#/components/schemas/NATSSubscriptionRequest"
-          # KAFKA: "#/components/schemas/ApacheKafkaSubscriptionRequest"
-
-    SubscriptionAsync:
-      description: Response for a event-type subscription request managed asynchronously (Creation or Deletion)
-      type: object
-      required:
-        - id
-      properties:
-        id:
-          $ref: "../common/CAMARA_event_common.yaml#/components/schemas/SubscriptionId"
-
-    SubscriptionList:
-      description: Response with subscriptions list
-      type: object
-      required:
-        - subscriptions
-        - pagination
-      properties:
-        subscriptions:
-          description: Subscriptions list
-          type: array
-          minItems: 0
-          maxItems: 100
-          items:
-            $ref: "#/components/schemas/Subscription"
-        pagination:
-          $ref: "../common/CAMARA_common.yaml#/components/schemas/Pagination"
-
-    SubscriptionLifecycleEvent:
-      description: |
-        Subscription lifecycle event group, common to all CAMARA APIs that
-        support explicit subscriptions.
-        Extends the CloudEvent envelope and constrains `type` to the set of
-        lifecycle event types managed by Commonalities.
-      allOf:
-        - $ref: "../common/CAMARA_event_common.yaml#/components/schemas/CloudEvent"
-        - type: object
-          properties:
-            type:
-              $ref: "#/components/schemas/SubscriptionLifecycleEventType"
-      discriminator:
-        propertyName: type
-        mapping:
-          org.camaraproject.device-data-volume-subscriptions.v0.subscription-started: "#/components/schemas/EventSubscriptionStarted"
-          org.camaraproject.device-data-volume-subscriptions.v0.subscription-updated: "#/components/schemas/EventSubscriptionUpdated"
-          org.camaraproject.device-data-volume-subscriptions.v0.subscription-ended: "#/components/schemas/EventSubscriptionEnded"
-
-    SubscriptionLifecycleEventType:
-      type: string
-      description: |
-        Enum of subscription lifecycle event type strings.
-        These are managed by Commonalities and are identical across all CAMARA
-        APIs that support explicit subscriptions.
-        Kept as a separate named schema so the set of valid lifecycle type
-        strings can be referenced independently from the discriminated schema.
-      enum:
-        - org.camaraproject.device-data-volume-subscriptions.v0.subscription-started
-        - org.camaraproject.device-data-volume-subscriptions.v0.subscription-updated
-        - org.camaraproject.device-data-volume-subscriptions.v0.subscription-ended
-
-    # Event structures for data volume
-    BasicDeviceEventData:
-      description: Event detail structure for basic device events
-      type: object
-      required:
-        - subscriptionId
+      description: The maximum downstream media streaming bit rate supported for the device.
       properties:
         device:
-          $ref: "../common/CAMARA_common.yaml#/components/schemas/DeviceResponse"
-        subscriptionId:
-          $ref: "../common/CAMARA_event_common.yaml#/components/schemas/SubscriptionId"
-
-    EventDataUsage50Percent:
-      description: Event structure for data usage 50% threshold alerts
-      allOf:
-        - $ref: "#/components/schemas/ApiNotificationEvent"
-        - type: object
-          properties:
-            data:
-              $ref: "#/components/schemas/BasicDeviceEventData"
-
-    EventDataUsage75Percent:
-      description: Event structure for data usage 75% threshold alerts
-      allOf:
-        - $ref: "#/components/schemas/ApiNotificationEvent"
-        - type: object
-          properties:
-            data:
-              $ref: "#/components/schemas/BasicDeviceEventData"
-
-    EventDataUsage90Percent:
-      description: Event structure for data usage 90% threshold alerts
-      allOf:
-        - $ref: "#/components/schemas/ApiNotificationEvent"
-        - type: object
-          properties:
-            data:
-              $ref: "#/components/schemas/BasicDeviceEventData"
-
-    EventDataUsageExceeded:
-      description: Event structure for data usage exceeding the allocated volume
-      allOf:
-        - $ref: "#/components/schemas/ApiNotificationEvent"
-        - type: object
-          properties:
-            data:
-              $ref: "#/components/schemas/BasicDeviceEventData"
-
-    EventSubscriptionStarted:
-      description: Event structure for event subscription started
-      allOf:
-        - $ref: "#/components/schemas/SubscriptionLifecycleEvent"
-        - type: object
-          properties:
-            data:
-              allOf:
-                - type: object
-                  properties:
-                    device:
-                      $ref: "../common/CAMARA_common.yaml#/components/schemas/DeviceResponse"
-                - $ref: "../common/CAMARA_event_common.yaml#/components/schemas/SubscriptionStarted"
-
-    EventSubscriptionUpdated:
-      description: Event structure for event subscription updated
-      allOf:
-        - $ref: "#/components/schemas/SubscriptionLifecycleEvent"
-        - type: object
-          properties:
-            data:
-              allOf:
-                - type: object
-                  properties:
-                    device:
-                      $ref: "../common/CAMARA_common.yaml#/components/schemas/DeviceResponse"
-                - $ref: "../common/CAMARA_event_common.yaml#/components/schemas/SubscriptionUpdated"
-
-    EventSubscriptionEnded:
-      description: Event structure for event subscription ends
-      allOf:
-        - $ref: "#/components/schemas/SubscriptionLifecycleEvent"
-        - type: object
-          properties:
-            data:
-              allOf:
-                - type: object
-                  properties:
-                    device:
-                      $ref: "../common/CAMARA_common.yaml#/components/schemas/DeviceResponse"
-                - $ref: "../common/CAMARA_event_common.yaml#/components/schemas/SubscriptionEnded"
-
-    Sink:
-      description: The address to which events shall be delivered using the selected protocol.
-      type: string
-      format: uri
-      maxLength: 2048
-      pattern: ^https:\/\/.+$
-      example: "https://endpoint.example.com/sink"
-
-    HTTPSubscriptionRequest:
-      description: Subscription request for HTTP-based event delivery.
-      allOf:
-        - $ref: "#/components/schemas/SubscriptionRequest"
-        - type: object
-          properties:
-            protocolSettings:
-              $ref: "../common/CAMARA_event_common.yaml#/components/schemas/HTTPSettings"
-
-    HTTPSubscriptionResponse:
-      description: Subscription resource returned for HTTP-based event delivery.
-      allOf:
-        - $ref: "#/components/schemas/Subscription"
-        - type: object
-          properties:
-            protocolSettings:
-              $ref: "../common/CAMARA_event_common.yaml#/components/schemas/HTTPSettings"
-
-  examples:
-    DATA_50_PERCENT:
-      description: Example of data-50-percent notification
-      value:
-        id: "124007"
-        source: https://dataUsageServer.supertelco.com
-        type: org.camaraproject.device-data-volume-subscriptions.v0.data-50-percent
-        specversion: "1.0"
-        datacontenttype: application/json
-        data:
-          device:
-            phoneNumber: "+123456789"
-          subscriptionId: "dv10-h556-rt89-1406"
-        time: "2024-05-12T12:45:23.682Z"
-
-    DATA_75_PERCENT:
-      description: Example of data-75-percent notification
-      value:
-        id: "124008"
-        source: https://dataUsageServer.supertelco.com
-        type: org.camaraproject.device-data-volume-subscriptions.v0.data-75-percent
-        specversion: "1.0"
-        datacontenttype: application/json
-        data:
-          device:
-            phoneNumber: "+123456789"
-          subscriptionId: "dv10-h556-rt89-1407"
-        time: "2024-05-12T14:30:23.682Z"
-
-    DATA_90_PERCENT:
-      description: Example of data-90-percent notification
-      value:
-        id: "124009"
-        source: https://dataUsageServer.supertelco.com
-        type: org.camaraproject.device-data-volume-subscriptions.v0.data-90-percent
-        specversion: "1.0"
-        datacontenttype: application/json
-        data:
-          device:
-            phoneNumber: "+123456789"
-          subscriptionId: "dv10-h556-rt89-1408"
-        time: "2024-05-12T16:15:23.682Z"
-
-    DATA_EXCEEDED:
-      description: Example of data-exceeded notification
-      value:
-        id: "124010"
-        source: https://dataUsageServer.supertelco.com
-        type: org.camaraproject.device-data-volume-subscriptions.v0.data-exceeded
-        specversion: "1.0"
-        datacontenttype: application/json
-        data:
-          device:
-            phoneNumber: "+123456789"
-          subscriptionId: "dv10-h556-rt89-1409"
-        time: "2024-05-12T18:00:23.682Z"
-
-    SUBSCRIPTION_STARTED:
-      description: Example of subscription started notification
-      value:
-        id: "124003"
-        source: https://dataUsageServer.supertelco.com
-        type: org.camaraproject.device-data-volume-subscriptions.v0.subscription-started
-        specversion: "1.0"
-        datacontenttype: application/json
-        data:
-          device:
-            phoneNumber: "+123456789"
-          initiationReason: SUBSCRIPTION_CREATED
-          subscriptionId: dv10-h556-rt89-1403
-        time: "2024-03-05T15:00:23.682Z"
-
-    SUBSCRIPTION_UPDATED:
-      description: Example of subscription updated notification
-      value:
-        id: "124003"
-        source: https://dataUsageServer.supertelco.com
-        type: org.camaraproject.device-data-volume-subscriptions.v0.subscription-updated
-        specversion: "1.0"
-        datacontenttype: application/json
-        data:
-          device:
-            phoneNumber: "+123456789"
-          updateReason: SUBSCRIPTION_ACTIVE
-          subscriptionId: dv10-h556-rt89-1403
-        time: "2024-03-05T15:00:23.682Z"
-
-    SUBSCRIPTION_ENDED:
-      description: Example of subscription ended notification
-      value:
-        id: "124003"
-        source: https://dataUsageServer.supertelco.com
-        type: org.camaraproject.device-data-volume-subscriptions.v0.subscription-ended
-        specversion: "1.0"
-        datacontenttype: application/json
-        data:
-          device:
-            phoneNumber: "+123456789"
-          terminationReason: SUBSCRIPTION_EXPIRED
-          subscriptionId: dv10-h556-rt89-1403
-        time: "2024-03-05T15:00:23.682Z"
-
-    SUBSCRIPTION_CREATION:
-      description: A new subscription has been successfully created
-      value:
-        protocol: HTTP
-        protocolSettings:
-          method: POST
-        sink: https://endpoint.example.com/sink
-        types:
-          - org.camaraproject.device-data-volume-subscriptions.v0.data-50-percent
-        config:
-          subscriptionDetail: {}
-          subscriptionExpireTime: '2023-01-17T13:18:23.682Z'
-          subscriptionMaxEvents: 5
-          initialEvent: true
-        id: 550e8400-e29b-41d4-a716-446655440000
-        status: ACTIVE
-        startsAt: '2023-01-17T12:27:08.312Z'
-        expiresAt: '2023-01-17T13:18:23.682Z'
-
-    SUBSCRIPTION_CREATION_WITH_DEVICE_DISAMBIGUATION:
-      description: A new subscription has been successfully created
-      value:
-        protocol: HTTP
-        protocolSettings:
-          method: POST
-        sink: https://endpoint.example.com/sink
-        types:
-          - org.camaraproject.device-data-volume-subscriptions.v0.data-50-percent
-        config:
-          subscriptionDetail:
-            device:
-              phoneNumber: "+123456789"
-          subscriptionExpireTime: '2023-01-17T13:18:23.682Z'
-          subscriptionMaxEvents: 5
-          initialEvent: true
-        id: 550e8400-e29b-41d4-a716-446655440000
-        status: ACTIVE
-        startsAt: '2023-01-17T12:27:08.312Z'
-        expiresAt: '2023-01-17T13:18:23.682Z'
-
-    ACTIVE_SUBSCRIPTION:
-      description: Details of an active subscription
-      value:
-        id: 550e8400-e29b-41d4-a716-446655440001
-        sink: https://endpoint.example.com/sink
-        protocol: HTTP
-        types:
-          - "org.camaraproject.device-data-volume-subscriptions.v0.data-exceeded"
-        config:
-          subscriptionDetail: {}
-          subscriptionExpireTime: "2024-08-01T14:18:23.682Z"
-          subscriptionMaxEvents: 10
-          initialEvent: true
-        status: ACTIVE
-        startsAt: '2023-01-17T12:27:08.312Z'
-        expiresAt: '2023-01-17T13:18:23.682Z'
-
-    ACTIVE_SUBSCRIPTION_WITH_DEVICE_DISAMBIGUATION:
-      description: Details of an active subscription with device details for disambiguation
-      value:
-        id: 550e8400-e29b-41d4-a716-446655440001
-        sink: https://endpoint.example.com/sink
-        protocol: HTTP
-        types:
-          - "org.camaraproject.device-data-volume-subscriptions.v0.data-exceeded"
-        config:
-          subscriptionDetail:
-            device:
-              phoneNumber: "+123456789"
-          subscriptionExpireTime: "2024-08-01T14:18:23.682Z"
-          subscriptionMaxEvents: 10
-          initialEvent: true
-        status: ACTIVE
-        startsAt: '2023-01-17T12:27:08.312Z'
-        expiresAt: '2023-01-17T13:18:23.682Z'
-
-    SUBSCRIPTION_LIST:
-      description: A list of API consumer subscriptions. If a 3-legged access token is used, the list is specific to the device associated with that token.
-      value:
-        subscriptions:
-          - id: 550e8400-e29b-41d4-a716-446655440000
-            sink: https://endpoint.example.com/sink
-            protocol: HTTP
-            types:
-              - "org.camaraproject.device-data-volume-subscriptions.v0.data-exceeded"
-            config:
-              subscriptionDetail: {}
-              subscriptionExpireTime: "2024-07-17T13:18:23.682Z"
-              subscriptionMaxEvents: 5
-              initialEvent: true
-            startsAt: "2024-07-03T21:12:02.871Z"
-            expiresAt: "2024-07-03T21:12:02.871Z"
-            status: ACTIVE
-        pagination:
-          page: 1
-          perPage: 1
-          totalCount: 1
-          totalPages: 1
-
-    EMPTY_SUBSCRIPTION_LIST:
-      description: The API consumer either has no subscriptions or, if a 3-legged access token is used, has none for the device associated with that token.
-      value:
-        subscriptions: []
-        pagination:
-          page: 1
-          perPage: 1
-          totalCount: 0
-          totalPages: 1
+          $ref: "#/components/schemas/DeviceResponse"
+        maxDownstreamMediaBitRateSupported:
+          type: integer
+          description: The maximum downstream bit rate supported for the device
+          example: 10
+          format: int32
+          minimum: 0
+          maximum: 1024
+        unit:
+          type: string
+          description: The unit of the bit rate (e.g., Mbps, Kbps)
+          example: "Mbps"
+          enum:
+            - bps
+            - kbps
+            - Mbps
+            - Gbps
+            - Tbps
+      required:
+        - maxDownstreamMediaBitRateSupported
+        - unit
