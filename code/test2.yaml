@@ -1286,11 +1286,9 @@ components:
                   - -83.0
                   - -82.0
                   - -81.0
-                  - null
-                  -
-                  - NULL
-                  - 'null'
-                  - "null"
+                  - <null>
+                  - <null>
+                  - <null>
               - geohash: ezdmemc
                 layerConnectivities:
                   - GC
