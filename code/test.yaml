@@ -209,9 +209,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/SessionInfo"
               examples:
-                "Successful Session Creation":
+                Successful Session Creation:
                   $ref: "#/components/examples/SESSION_CREATION_EXAMPLE"
-                "Successful Session Creation With Device Disambiguation":
+                Successful Session Creation With Device Disambiguation:
                   $ref: "#/components/examples/SESSION_CREATION_EXAMPLE_WITH_DEVICE_RESPONSE"
         "400":
           $ref: "#/components/responses/CreateSessionBadRequest400"
