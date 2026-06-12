@@ -1607,7 +1607,7 @@ components:
       summary: Successful session creation example 4
       description: Example response after a new QoS session has been created using a 2-legged access token with a single device identifier
       value:
-       device:
+        device:
           ipv4Address:
             publicAddress: "203.0.113.0"
             publicPort: 59765
