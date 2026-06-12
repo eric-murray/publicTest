@@ -153,14 +153,16 @@ paths:
         - $ref: "#/components/parameters/x-correlator"
       requestBody:
         description: Parameters to create a new session
+        required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/CreateSession"
             examples:
-              Session_Creation_Using_3-Legged_Access_Token:
-                $ref: "#/components/examples/EXAMPLE_CREATION_BODY"
-        required: true
+              Session_Creation_Using_3-Legged_Access_Token_And_IPv4_Subnet:
+                $ref: "#/components/examples/EXAMPLE_CREATION_BODY_3-LEGGED_ACCESS_TOKEN_IPv4_SUBNET"
+              Session_Creation_Using_3-Legged_Access_Token_And_IP_Address_List:
+                $ref: "#/components/examples/EXAMPLE_CREATION_BODY_3-LEGGED_ACCESS_TOKEN_IP_ADDRESS_LIST"
       callbacks:
         notifications:
           "{$request.body#/sink}":
@@ -1512,12 +1514,21 @@ components:
                 message: Rate limit reached.
 
   examples:
-    EXAMPLE_CREATION_BODY:
-      summary: Successful session creation with device not included in response
-      description: Example request using a 3-legged access token to identify the device
+    EXAMPLE_CREATION_BODY_3-LEGGED_ACCESS_TOKEN_IPv4_SUBNET:
+      summary: Session creation example
+      description: Example request using a 3-legged access token to identify the device and identifying the application server by IPv4 subnet
       value:
         applicationServer:
           ipv4Address: 198.51.100.0/24
+        qosProfile: QOS_L
+        duration: 3600
+
+    EXAMPLE_CREATION_BODY_3-LEGGED_ACCESS_TOKEN_IP_ADDRESS_LIST:
+      summary: Session creation example
+      description: Example request using a 3-legged access token to identify the device and identifying the application server by IP address list
+      value:
+        applicationServer:
+          ipv4Addresses: ["198.51.100.0", "198.51.100.255", "2001:db8:85a3:8d3:1319:8a2e:370:7344"]
         qosProfile: QOS_L
         duration: 3600
 
