@@ -1532,7 +1532,7 @@ components:
 
     EXAMPLE_1_CREATION_RESPONSE_3-LEGGED_ACCESS_TOKEN_IPv4_SUBNET:
       summary: Successful session creation example 1
-      description: Example response after a new QoS session has been created using a 3-legged access token (or possibly a single device identifier)
+      description: Example response after a new QoS session has been created using a 3-legged access token (or possibly a single device identifier) when the application server was identified by IPv4 subnet
       value:
         applicationServer:
           ipv4Address: 198.51.100.0/24
@@ -1554,7 +1554,7 @@ components:
 
     EXAMPLE_2_CREATION_RESPONSE_3-LEGGED_ACCESS_TOKEN_IP_ADDRESS_LIST:
       summary: Successful session creation example 2
-      description: Example response after a new QoS session has been created using a 3-legged access token (or possibly a single device identifier)
+      description: Example response after a new QoS session has been created using a 3-legged access token (or possibly a single device identifier) when the application server was identified by IP address list
       value:
         applicationServer:
           ipAddresses: ["198.51.100.0", "198.51.100.255", "2001:db8:85a3:8d3:1319:8a2e:370:7344"]
