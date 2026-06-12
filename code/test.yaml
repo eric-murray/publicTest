@@ -1590,7 +1590,7 @@ components:
 
     EXAMPLE_CREATION_BODY_2-LEGGED_ACCESS_TOKEN_MULTIPLE_IDENTIFIERS_IPv4_SUBNET:
       summary: Session creation example 4
-      description: Example request using a 2-legged access token to identify the device and identifying the application server by IPv4 subnet
+      description: Example request using a 2-legged access token to identify the device with multiple device identifiers, and identifying the application server by IPv4 subnet
       value:
         device:
           phoneNumber: "+123456789"
