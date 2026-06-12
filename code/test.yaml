@@ -160,13 +160,13 @@ paths:
               $ref: "#/components/schemas/CreateSession"
             examples:
               Example 1:
-                $ref: "#/components/examples/EXAMPLE_CREATION_BODY_3-LEGGED_ACCESS_TOKEN_IPv4_SUBNET"
+                $ref: "#/components/examples/EXAMPLE_1_CREATION_BODY_3-LEGGED_ACCESS_TOKEN_IPv4_SUBNET"
               Example 2:
-                $ref: "#/components/examples/EXAMPLE_CREATION_BODY_3-LEGGED_ACCESS_TOKEN_IP_ADDRESS_LIST"
+                $ref: "#/components/examples/EXAMPLE_2_CREATION_BODY_3-LEGGED_ACCESS_TOKEN_IP_ADDRESS_LIST"
               Example 3:
-                $ref: "#/components/examples/EXAMPLE_CREATION_BODY_2-LEGGED_ACCESS_TOKEN_IPv4_SUBNET"
+                $ref: "#/components/examples/EXAMPLE_3_CREATION_BODY_2-LEGGED_ACCESS_TOKEN_IPv4_SUBNET"
               Example 4:
-                $ref: "#/components/examples/EXAMPLE_CREATION_BODY_2-LEGGED_ACCESS_TOKEN_MULTIPLE_IDENTIFIERS_IPv4_SUBNET"
+                $ref: "#/components/examples/EXAMPLE_4_CREATION_BODY_2-LEGGED_ACCESS_TOKEN_MULTIPLE_IDENTIFIERS_IPv4_SUBNET"
       callbacks:
         notifications:
           "{$request.body#/sink}":
@@ -219,13 +219,13 @@ paths:
                 $ref: "#/components/schemas/SessionInfo"
               examples:
                 Example 1:
-                  $ref: "#/components/examples/EXAMPLE_CREATION_RESPONSE_3-LEGGED_ACCESS_TOKEN_IPv4_SUBNET"
+                  $ref: "#/components/examples/EXAMPLE_1_CREATION_RESPONSE_3-LEGGED_ACCESS_TOKEN_IPv4_SUBNET"
                 Example 2:
-                  $ref: "#/components/examples/EXAMPLE_CREATION_RESPONSE_3-LEGGED_ACCESS_TOKEN_IP_ADDRESS_LIST"
+                  $ref: "#/components/examples/EXAMPLE_2_CREATION_RESPONSE_3-LEGGED_ACCESS_TOKEN_IP_ADDRESS_LIST"
                 Example 3:
-                  $ref: "#/components/examples/EXAMPLE_CREATION_RESPONSE_2-LEGGED_ACCESS_TOKEN_IPv4_SUBNET"
+                  $ref: "#/components/examples/EXAMPLE_3_CREATION_RESPONSE_2-LEGGED_ACCESS_TOKEN_IPv4_SUBNET"
                 Example 4:
-                  $ref: "#/components/examples/EXAMPLE_CREATION_RESPONSE_2-LEGGED_ACCESS_TOKEN_MULTIPLE_IDENTIFIERS_IPv4_SUBNET"
+                  $ref: "#/components/examples/EXAMPLE_4_CREATION_RESPONSE_2-LEGGED_ACCESS_TOKEN_MULTIPLE_IDENTIFIERS_IPv4_SUBNET"
         "400":
           $ref: "#/components/responses/CreateSessionBadRequest400"
         "401":
@@ -1520,7 +1520,7 @@ components:
                 message: Rate limit reached.
 
   examples:
-    EXAMPLE_CREATION_BODY_3-LEGGED_ACCESS_TOKEN_IPv4_SUBNET:
+    EXAMPLE_1_CREATION_BODY_3-LEGGED_ACCESS_TOKEN_IPv4_SUBNET:
       summary: Session creation example 1
       description: Example request using a 3-legged access token to identify the device and identifying the application server by IPv4 subnet
       value:
@@ -1530,9 +1530,9 @@ components:
         duration: 3600
         sink: https://application-server.com/notifications
 
-    EXAMPLE_CREATION_RESPONSE_3-LEGGED_ACCESS_TOKEN_IPv4_SUBNET:
+    EXAMPLE_1_CREATION_RESPONSE_3-LEGGED_ACCESS_TOKEN_IPv4_SUBNET:
       summary: Successful session creation example 1
-      description: Example response after a new QoS session has been created using a 3-legged access token, or possibly a single device identifier
+      description: Example response after a new QoS session has been created using a 3-legged access token (or possibly a single device identifier)
       value:
         applicationServer:
           ipv4Address: 198.51.100.0/24
@@ -1542,7 +1542,7 @@ components:
         duration: 3600
         qosStatus: REQUESTED
 
-    EXAMPLE_CREATION_BODY_3-LEGGED_ACCESS_TOKEN_IP_ADDRESS_LIST:
+    EXAMPLE_2_CREATION_BODY_3-LEGGED_ACCESS_TOKEN_IP_ADDRESS_LIST:
       summary: Session creation example 2
       description: Example request using a 3-legged access token to identify the device and identifying the application server by IP address list
       value:
@@ -1552,9 +1552,9 @@ components:
         duration: 3600
         sink: https://application-server.com/notifications
 
-    EXAMPLE_CREATION_RESPONSE_3-LEGGED_ACCESS_TOKEN_IP_ADDRESS_LIST:
+    EXAMPLE_2_CREATION_RESPONSE_3-LEGGED_ACCESS_TOKEN_IP_ADDRESS_LIST:
       summary: Successful session creation example 2
-      description: Example response after a new QoS session has been created using a 3-legged access token, or possibly a single device identifier
+      description: Example response after a new QoS session has been created using a 3-legged access token (or possibly a single device identifier)
       value:
         applicationServer:
           ipAddresses: ["198.51.100.0", "198.51.100.255", "2001:db8:85a3:8d3:1319:8a2e:370:7344"]
@@ -1564,7 +1564,7 @@ components:
         duration: 3600
         qosStatus: REQUESTED
 
-    EXAMPLE_CREATION_BODY_2-LEGGED_ACCESS_TOKEN_IPv4_SUBNET:
+    EXAMPLE_3_CREATION_BODY_2-LEGGED_ACCESS_TOKEN_IPv4_SUBNET:
       summary: Session creation example 3
       description: Example request using a 2-legged access token to identify the device and identifying the application server by IPv4 subnet
       value:
@@ -1576,7 +1576,7 @@ components:
         duration: 3600
         sink: https://application-server.com/notifications
 
-    EXAMPLE_CREATION_RESPONSE_2-LEGGED_ACCESS_TOKEN_IPv4_SUBNET:
+    EXAMPLE_3_CREATION_RESPONSE_2-LEGGED_ACCESS_TOKEN_IPv4_SUBNET:
       summary: Successful session creation example 3
       description: Example response after a new QoS session has been created using a 2-legged access token with a single device identifier
       value:
@@ -1588,9 +1588,9 @@ components:
         duration: 3600
         qosStatus: REQUESTED
 
-    EXAMPLE_CREATION_BODY_2-LEGGED_ACCESS_TOKEN_MULTIPLE_IDENTIFIERS_IPv4_SUBNET:
+    EXAMPLE_4_CREATION_BODY_2-LEGGED_ACCESS_TOKEN_MULTIPLE_IDENTIFIERS_IPv4_SUBNET:
       summary: Session creation example 4
-      description: Example request using a 2-legged access token to identify the device with multiple device identifiers, and identifying the application server by IPv4 subnet
+      description: Example request using a 2-legged access token with multiple device identifiers, and identifying the application server by IPv4 subnet
       value:
         device:
           phoneNumber: "+123456789"
@@ -1603,9 +1603,9 @@ components:
         duration: 3600
         sink: https://application-server.com/notifications
 
-    EXAMPLE_CREATION_RESPONSE_2-LEGGED_ACCESS_TOKEN_MULTIPLE_IDENTIFIERS_IPv4_SUBNET:
+    EXAMPLE_4_CREATION_RESPONSE_2-LEGGED_ACCESS_TOKEN_MULTIPLE_IDENTIFIERS_IPv4_SUBNET:
       summary: Successful session creation example 4
-      description: Example response after a new QoS session has been created using a 2-legged access token with a single device identifier
+      description: Example response after a new QoS session has been created using a 2-legged access token indicating which device identifier is being used for the QoS session
       value:
         device:
           ipv4Address:
